@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Estoque · Bottega</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0F0F0F;
+    --surface: #1A1A1A;
+    --surface2: #242424;
+    --border: #2E2E2E;
+    --gold: #C9A84C;
+    --gold-dim: #8A6E2F;
+    --text: #F0EDE8;
+    --text-dim: #888;
+    --green: #4CAF7D;
+    --red: #E05252;
+    --radius: 12px;
+    --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .logo {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .date-badge {
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .header-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* MAIN */
+  main { padding: 16px 16px 120px; max-width: 480px; margin: 0 auto; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin: 20px 0 8px;
+  }
+
+  /* SEARCH BOX */
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 17px;
+    font-family: var(--font);
+    padding: 14px 44px 14px 16px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-wrap input:focus { border-color: var(--gold); }
+  .search-wrap input::placeholder { color: var(--text-dim); }
+  .search-clear {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--surface2);
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .search-clear.visible { display: flex; }
+
+  /* DROPDOWN */
+  .dropdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .dropdown.open { display: block; }
+  .dropdown-item {
+    padding: 13px 16px;
+    font-size: 15px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:active, .dropdown-item.focused { background: var(--surface2); }
+  .dropdown-item mark {
+    background: none;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .dropdown-empty {
+    padding: 16px;
+    font-size: 14px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* SELECTED ITEM CHIP */
+  .selected-chip {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1.5px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-top: 8px;
+  }
+  .selected-chip.visible { display: flex; }
+  .chip-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .chip-remove {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+
+  /* INPUTS */
+  .input-row { display: flex; gap: 10px; }
+  .input-group { flex: 1; }
+  .input-group label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .input-group input,
+  .input-group select {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 17px;
+    font-family: var(--font);
+    padding: 13px 14px;
+    outline: none;
+    transition: border-color .2s;
+    appearance: none;
+  }
+  .input-group input:focus,
+  .input-group select:focus { border-color: var(--gold); }
+  .input-group input[type=number]::-webkit-inner-spin-button { opacity: 0; }
+
+  /* SETOR SELECT custom arrow */
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: "▾";
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    pointer-events: none;
+    font-size: 14px;
+  }
+  .select-wrap select { padding-right: 36px; }
+
+  /* SAVE BUTTON */
+  .btn-save {
+    width: 100%;
+    background: var(--gold);
+    color: #0F0F0F;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font);
+    letter-spacing: 0.04em;
+    padding: 16px;
+    margin-top: 24px;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    position: relative;
+  }
+  .btn-save:active { transform: scale(0.98); opacity: .85; }
+  .btn-save:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-save .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 0 auto;
+  }
+  .btn-save.loading span { display: none; }
+  .btn-save.loading .spinner { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 12px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+    opacity: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  /* LOG */
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 28px;
+    margin-bottom: 8px;
+  }
+  .log-count {
+    background: var(--gold);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .log-item-name { flex: 1; font-size: 14px; font-weight: 600; }
+  .log-item-meta { font-size: 12px; color: var(--text-dim); }
+  .log-item-peso {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 52px;
+    text-align: right;
+  }
+  .log-empty {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 24px 0;
+  }
+
+  /* CONFIG MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .modal h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .modal p {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .modal input {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    padding: 12px 14px;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  .modal input:focus { border-color: var(--gold); }
+  .modal-btns { display: flex; gap: 10px; }
+  .btn-modal-cancel {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 13px;
+    cursor: pointer;
+  }
+  .btn-modal-save {
+    flex: 2;
+    background: var(--gold);
+    border: none;
+    border-radius: var(--radius);
+    color: #000;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px;
+    cursor: pointer;
+  }
+  .config-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <span class="logo">Bottega · Estoque</span>
+    <span class="date-badge" id="dateBadge"></span>
+  </div>
+  <div class="header-subtitle">Contagem de inventário</div>
+</div>
+
+<main>
+  <!-- CONFIGURAÇÃO -->
+  <div style="display:flex; justify-content:flex-end; margin-bottom:4px;">
+    <button class="config-btn" onclick="openConfig()">⚙ Configurar Google Sheets</button>
+  </div>
+
+  <!-- ITEM -->
+  <div class="section-label">Item</div>
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Digite o nome do item..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="dropdown" id="dropdown"></div>
+  <div class="selected-chip" id="selectedChip">
+    <span class="chip-name" id="chipName"></span>
+    <button class="chip-remove" onclick="clearItem()">✕</button>
+  </div>
+
+  <!-- PESO + SETOR -->
+  <div class="section-label">Detalhes</div>
+  <div class="input-row">
+    <div class="input-group">
+      <label>Peso (kg)</label>
+      <input type="number" id="pesoInput" placeholder="0.000" step="0.001" min="0" inputmode="decimal">
+    </div>
+    <div class="input-group">
+      <label>Setor</label>
+      <div class="select-wrap">
+        <select id="setorSelect">
+          <option value="">Selecione</option>
+          <option>Delivery</option>
+          <option>Fria</option>
+          <option>Praça Principal</option>
+          <option>Praça Sobremesa</option>
+          <option>Praca Proteína</option>
+          <option>Geladeira Milanesa</option>
+          <option>Congelada</option>
+          <option>Seco</option>
+          <option>Salão</option>
+          <option>Bar</option>
+          <option>Lucas</option>
+          <option>Outros</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO -->
+  <button class="btn-save" id="btnSave" onclick="salvar()">
+    <span>Salvar lançamento</span>
+    <div class="spinner"></div>
+  </button>
+
+  <!-- LOG DO DIA -->
+  <div class="log-header">
+    <div class="section-label" style="margin:0">Lançados hoje</div>
+    <span class="log-count" id="logCount">0</span>
+  </div>
+  <div class="log-list" id="logList">
+    <div class="log-empty">Nenhum lançamento ainda</div>
+  </div>
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL CONFIG -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeConfigOutside(event)">
+  <div class="modal">
+    <h2>Conectar Google Sheets</h2>
+    <p>Cole aqui a URL do seu Google Apps Script. Você vai criar isso uma única vez seguindo o guia abaixo.</p>
+    <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." value="">
+    <p style="margin-bottom:8px; font-size:12px;">ID da planilha Google Sheets:</p>
+    <input type="text" id="sheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" value="">
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeConfig()">Cancelar</button>
+      <button class="btn-modal-save" onclick="saveConfig()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ITENS = [
+  'Abacaxi Perola','Abobrinha Italiana','Aceto Balsâmico De Nigris 25%',
+  'Acucar Glacucar Refinado','Acucar Refinado','Agnollotti Di Agnelo - Un',
+  'Alcaparra','Alcaparrones','Alecrim - Kg','Alf Crespa Hidrop','Alface Frisee',
+  'Alface Roxa Hidro','Alho','Amendoas Fatiadas S/ Pele','Anchova - Kg',
+  'Arroz Branco','Atum File','Azeite Extra Virgem','Base Carbonara','Base Tiramisu',
+  'Basilico','Batata Asterix Florao','Batata Asterix Florao - Marcada',
+  'Batata Asterix Florao - Palha','Batata Asterix Florao - Palitada','Batata Bolinha',
+  'Baunilha Granel - Kg','Beringela','Berinjela A Parmegiana','Beterraba',
+  'Biscoito Champanhe','Bottoni Mozzarella - Kg','Brocolis Japones','Cacau Em Pó',
+  'Calda De Tangerina','Camarão','Cappellacci Ricotta Ed Erbe','Carlina',
+  'Caviar De Mujol','Cebola','Cebola Roxa','Cenoura G','Cereja Amarena',
+  'Chocolate Calleb 50% Kg','Chumichurry- Kg','Coentro - Kg','Couve Flor',
+  'Creme Caccio E Pepe','Creme De Leite Fresco','Creme Funghi','Essencia De Baunilha',
+  'F Rosca Pao Italiano - Kg','Farinha De Trigo Kg','Farinha Mandioca - Kg',
+  'Farofa De Pao','Feijao Carioca','Feijao Preto - Kg','File Mignon Vpj',
+  'File Mignon Ws','Flor De Sal','Folhas De Lasanha','Framboesa','Gelatina Em Folha',
+  'Gema De Ovo Pasteurizada','Gnocchi','Gratinado','Hondashi','Lasanha Ao Pesto',
+  'Leite Uht Integral','Louro - Kg','Macarrão Fettuccine','Maiale Canastra Secreto',
+  'Manteiga Bloco','Manteiga Caccio Pepe','Massa Croquetta','Massa Fusilli',
+  'Massa Linguine','Massa Maltagliata','Massa Orecchiette','Massa Paccheri',
+  'Massa Penne','Massa Rigatoni','Massa Spaghetti','Micro Rucula','Mix De Pimenta',
+  'Mix De Queijo','Molho Amatriciana Bianca','Molho Bolognesa','Molho Branco',
+  'Molho Cacio Peppe','Molho De Camarao','Molho De Cordeiro - Un','Molho De Pera',
+  'Molho De Tomate Kg','Molho Giulienne','Molho Ingles - L','Molho Oleo Verde',
+  'Molho Pesto','Molho Pomodoro','Molho Ragu De Linguica',
+  'Molho Shoyu Sakura Tradicional - Un','Molho Tonnato','Mostarda Dijon',
+  'Oleo De Girassol','Oleo Soja Leve 900Ml','Ovas De Botarga','Ovo Branco',
+  'Palmito Pupunha','Panacota Calda De Tangerina','Pão Campagne','Pao Italiano Pre',
+  'Papa Pomodoro','Pera Williams - Kg','Pesto De Folhas','Pimenta Do Reino Em Grao',
+  'Pinoli','Prejereba','Presunto De Parma','Prosciutto Cotto - Kg','Pure De Batata',
+  'Queijo Burrata','Queijo Em Tiras','Queijo Gorgonzola','Queijo Mascarpone',
+  'Queijo Mussarela De Bufala','Queijo Parmesao Forma','Queijo Parmesao Ralado',
+  'Queijo Pecorino Romano','Radiccio - Kg','Ragu De Vitelo','Rucula Hidro',
+  'Sal Grosso','Sal Refinado','Salsa Comum','Salsa Trufada','Salsao - Kg','Salvia',
+  'Stracciatella','Suco Em Po - Kg','Tagliolini','Tangerina Exportacao - Kg',
+  'Tempero Baiano - Kg','Tomate Cereja C/ Cabinho','Tomate Holandes','Tomate Pelado',
+  'Tomate Sweet Grape Amarelo','Tomilho - Kg','Torrada','Torteline De Ossobuco',
+  'Trevo - Kg','Trufa Negra','Chocolate Calleb Amargo','Pera - Kg','Bechamel',
+  'Creme Brule','Mix Queijo','Molho Cipriani','Molho Pera','Mouse Chocolate Calebout',
+  'Pão Brusqueta','Tagliolini Gratinati','Ancho - Kg','Cafe Moido','Bolo Cipriani G',
+  'Chocolate Calleb Amargo 50% Kg','Amora - Kg','Amora Congelada - Kg','Burbim - Kg',
+  'Cebolinha - Kg','Couve - Kg','Folha De Capuchinha - Kg','Framboesa Congelada - Kg',
+  'Gengibre - Kg','Mandioca - Kg','Melancia - Kg','Pimentao Amarelo - Kg',
+  'Pimentao Verde - Kg','Pimentao Vermelho - Kg','Tomate Atomico - Kg',
+  'Creme Culinario (Creme De Leite) - Kg','Bechamel Verde','Calda De Chocolate',
+  'Calda De Frutas Vermelhas','Caldo De Camarao','Caldo Vegetal','Cannoli De Ricota',
+  'Carpaccio','Cesta De Pão','Cheesecake','Creme De Ricota','Geleia De Frutas Vermelhas',
+  'Maionese','Milanesa','Mix Alface','Molho Salada','Molho Tartar','Mousse Branca',
+  'Mousse Chocolate Branco','Praline','Rosbife','Salada De Rucula','Tartar','Tiramisu',
+  'Vinagrete Atum','Capeletti Di Gamberi E Porco Nero - Kg','Molho Genovese',
+  'Molho Ingles Lea Perris','Alcatra Com Maminha - Kg','Bisteca Suina Congelada - Kg',
+  'Carne Moida - Kg','Contra File - Kg','Costela Bovina - Kg','Costela Suina - Kg',
+  'Coxa E Sobrecoxa Frango - Kg','Coxao Duro - Kg','Coxao Mole - Kg',
+  'File Peito S/Sassami - Kg','Filet De Pangasius - Kg','Filezinho De Frango Empanado - Kg',
+  'Frango A Passarinho - Kg','Frango Inteiro - Kg','Hamburguer Bovino (50 Gr) - Kg',
+  'Jerked Beef Cambui Traseiro - Kg','Kit Feijoada - Kg','Lagarto - Kg',
+  'Linguica Calabresa - Kg','Linguica Toscana - Kg','Peito De Frango - Kg',
+  'Rabo Bovino - Kg','Sobrecoxa Lar Cong Ind - Kg','Acucar Cristal Sache - Un',
+  'Acucar Mascavo Sache - Un','Adocante Sache - Un','Doce De Leite - Kg',
+  'Biscoito Amanteigado - Kg','Chimichurri - Kg','Colorau - Kg','Ketchup - Kg',
+  'Leite De Coco Lt - L','Lichia Em Calda - Kg','Maionese - Kg','Mel Silvestre - Kg',
+  'Molho Barbecue - Kg','Mostarda - Kg','Noz Moscada - Kg','Bolo De Chocolate Gato - Un',
+  'Cabo De Aluminio 140Cm - Un','Chocolate 1/2 Amargo Person','Hortela - Kg',
+  'Maracuja - Kg','Sacola Delivery 31X33X19 - Un','Base Brandade',
+  'Tortelone De Abobora E Taleggio - Un','Creme Funghi Trufado - Un',
+  'Brandade De Bacalhau','Trufa Negra Verao - Kg','Capeletti Di Gamberi - Kg','Oleo Soja'
+];
+
+// ── State ─────────────────────────────────────────────────────────────────
+let selectedItem = null;
+let log = JSON.parse(localStorage.getItem('estoqueLog') || '[]');
+let config = JSON.parse(localStorage.getItem('estoqueConfig') || '{}');
+
+// ── Date ──────────────────────────────────────────────────────────────────
+const now = new Date();
+const dateStr = now.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'});
+document.getElementById('dateBadge').textContent = dateStr;
+const todayKey = now.toLocaleDateString('pt-BR');
+
+// ── Search ────────────────────────────────────────────────────────────────
+const searchInput = document.getElementById('searchInput');
+const dropdown = document.getElementById('dropdown');
+const searchClear = document.getElementById('searchClear');
+
+function normalize(str) {
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+searchInput.addEventListener('input', function() {
+  const q = this.value.trim();
+  searchClear.classList.toggle('visible', q.length > 0);
+  if (q.length < 1) { dropdown.classList.remove('open'); dropdown.innerHTML = ''; return; }
+  const nq = normalize(q);
+  const results = ITENS.filter(i => normalize(i).includes(nq)).slice(0, 20);
+  if (results.length === 0) {
+    dropdown.innerHTML = '<div class="dropdown-empty">Nenhum item encontrado</div>';
+  } else {
+    dropdown.innerHTML = results.map(item => {
+      const hi = item.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>');
+      return `<div class="dropdown-item" onclick="selectItem('${item.replace(/'/g,"\\'")}')"><span>${hi}</span></div>`;
+    }).join('');
+  }
+  dropdown.classList.add('open');
+});
+
+function selectItem(name) {
+  selectedItem = name;
+  document.getElementById('chipName').textContent = name;
+  document.getElementById('selectedChip').classList.add('visible');
+  searchInput.value = '';
+  searchClear.classList.remove('visible');
+  dropdown.classList.remove('open');
+  dropdown.innerHTML = '';
+  document.getElementById('pesoInput').focus();
+}
+
+function clearSearch() {
+  searchInput.value = '';
+  searchClear.classList.remove('visible');
+  dropdown.classList.remove('open');
+}
+
+function clearItem() {
+  selectedItem = null;
+  document.getElementById('selectedChip').classList.remove('visible');
+  searchInput.focus();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-wrap') && !e.target.closest('.dropdown')) {
+    dropdown.classList.remove('open');
+  }
+});
+
+// ── Save ──────────────────────────────────────────────────────────────────
+async function salvar() {
+  if (!selectedItem) { showToast('Selecione um item', 'error'); return; }
+  const peso = parseFloat(document.getElementById('pesoInput').value);
+  if (!peso || peso <= 0) { showToast('Digite o peso', 'error'); return; }
+  const setor = document.getElementById('setorSelect').value;
+
+  const entry = {
+    data: todayKey,
+    item: selectedItem,
+    peso: peso,
+    setor: setor || '-',
+    hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+  };
+
+  const btn = document.getElementById('btnSave');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // Salva localmente sempre
+  log.unshift(entry);
+  localStorage.setItem('estoqueLog', JSON.stringify(log));
+
+  // Tenta enviar pro Sheets se configurado
+  if (config.scriptUrl) {
+    try {
+      await fetch(config.scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(entry)
+      });
+    } catch(e) { /* silencioso — dado já salvo localmente */ }
+  }
+
+  btn.classList.remove('loading');
+  btn.disabled = false;
+
+  // Reset form
+  clearItem();
+  document.getElementById('pesoInput').value = '';
+  document.getElementById('setorSelect').value = '';
+
+  showToast(`✓ ${entry.item.split(' ').slice(0,2).join(' ')} — ${peso.toFixed(3)} kg`, 'success');
+  renderLog();
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────
+function renderLog() {
+  const todayLog = log.filter(e => e.data === todayKey);
+  document.getElementById('logCount').textContent = todayLog.length;
+  const list = document.getElementById('logList');
+  if (todayLog.length === 0) {
+    list.innerHTML = '<div class="log-empty">Nenhum lançamento ainda</div>';
+    return;
+  }
+  list.innerHTML = todayLog.map(e => `
+    <div class="log-item">
+      <div>
+        <div class="log-item-name">${e.item}</div>
+        <div class="log-item-meta">${e.setor} · ${e.hora}</div>
+      </div>
+      <div class="log-item-peso">${Number(e.peso).toFixed(3)}</div>
+    </div>
+  `).join('');
+}
+renderLog();
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Config ────────────────────────────────────────────────────────────────
+function openConfig() {
+  document.getElementById('scriptUrl').value = config.scriptUrl || '';
+  document.getElementById('sheetId').value = config.sheetId || '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeConfig() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeConfigOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeConfig(); }
+function saveConfig() {
+  config.scriptUrl = document.getElementById('scriptUrl').value.trim();
+  config.sheetId = document.getElementById('sheetId').value.trim();
+  localStorage.setItem('estoqueConfig', JSON.stringify(config));
+  closeConfig();
+  showToast('Configuração salva', 'success');
+}
+</script>
+</body>
+</html>
