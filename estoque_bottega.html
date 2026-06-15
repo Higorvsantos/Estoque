@@ -529,5 +529,40 @@ function saveConfig() {
   showToast('Configuração salva', 'success');
 }
 </script>
+
+ <script>
+// ── Header hide on focus ──────────────────────────────────────────────────
+(function() {
+  const header = document.querySelector('.header');
+  let hideTimer = null;
+
+  function hideHeader() {
+    header.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease';
+    header.style.transform = 'translateY(-100%)';
+    header.style.opacity = '0';
+  }
+
+  function showHeader() {
+    clearTimeout(hideTimer);
+    header.style.transition = 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease';
+    header.style.transform = 'translateY(0)';
+    header.style.opacity = '1';
+  }
+
+  // Esconde ao focar em qualquer input ou select
+  document.addEventListener('focusin', function(e) {
+    if (e.target.matches('input, select, textarea')) {
+      hideTimer = setTimeout(hideHeader, 80);
+    }
+  });
+
+  // Mostra ao sair do campo
+  document.addEventListener('focusout', function(e) {
+    if (e.target.matches('input, select, textarea')) {
+      showHeader();
+    }
+  });
+})();
+</script>
 </body>
 </html>
