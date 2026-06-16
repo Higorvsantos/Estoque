@@ -102,10 +102,16 @@
   .select-wrap { position: relative; }
   .select-wrap::after { content: "▾"; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; font-size: 13px; }
   .select-wrap select { padding-right: 34px; }
+  .btn-setor-pick { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 15px; font-family: var(--font); padding: 12px 14px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: border-color .2s; text-align: left; }
+  .btn-setor-pick.selected { border-color: var(--gold); color: var(--text); }
+  .btn-setor-pick span:first-child { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .setor-pick-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; margin-bottom: 4px; }
+  .setor-pick-item { padding: 13px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; font-size: 15px; cursor: pointer; transition: background .1s, border-color .1s; }
+  .setor-pick-item:active { background: var(--border); }
+  .setor-pick-item.active { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+
   .btn-edit-setor { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text-dim); font-size: 17px; padding: 12px 13px; cursor: pointer; transition: border-color .2s; }
   .btn-edit-setor:active { border-color: var(--gold); }
-
-  /* BOTÃO SALVAR */
   .btn-save {
     width: 100%; background: var(--gold); color: #0F0F0F; border: none;
     border-radius: var(--radius); font-size: 16px; font-weight: 700;
@@ -257,8 +263,11 @@
     <div class="input-group">
       <label>Setor</label>
       <div style="display:flex;gap:8px;">
-        <div class="select-wrap" style="flex:1"><select id="setorSelect"></select></div>
-        <button class="btn-edit-setor" onclick="openSetores()">✏️</button>
+        <button class="btn-setor-pick" id="btnSetorPick" onclick="openSetorPick()" type="button">
+          <span id="setorPickLabel">Selecione</span>
+          <span style="color:var(--text-dim);font-size:13px">▾</span>
+        </button>
+        <button class="btn-edit-setor" onclick="openSetores()" type="button">✏️</button>
       </div>
     </div>
   </div>
@@ -328,6 +337,17 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeNovoItem()">Cancelar</button>
       <button class="btn-blue" onclick="confirmarNovoItem()">Usar este item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Selecionar Setor -->
+<div class="modal-overlay" id="modalSetorPick" onclick="if(event.target===this)closeSetorPick()">
+  <div class="modal">
+    <h2>📍 Selecionar Setor</h2>
+    <div class="setor-pick-list" id="setorPickList"></div>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn-cancel" onclick="closeSetorPick()" style="flex:1">Cancelar</button>
     </div>
   </div>
 </div>
@@ -438,7 +458,7 @@ let searchTimer = null;
 // Data
 const now = new Date();
 document.getElementById('dateBadge').textContent = now.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'});
-const todayKey = now.toLocaleDateString('pt-BR');
+const todayKey = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
 
 // Utilitários
 function normalize(str) {
@@ -448,14 +468,25 @@ function vibrar() {
   if (navigator.vibrate) navigator.vibrate(40);
 }
 
-// Setor
-function renderSetorSelect() {
-  const sel = document.getElementById('setorSelect');
-  const current = sel.value;
-  sel.innerHTML = '<option value="">Selecione</option>' +
-    setores.map(s => `<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('');
+// Setor picker
+let setorSelecionado = '';
+
+function openSetorPick() {
+  const list = document.getElementById('setorPickList');
+  list.innerHTML = setores.map(s => `
+    <div class="setor-pick-item${s===setorSelecionado?' active':''}" onclick="selecionarSetor('${s.replace(/'/g,"\\'")}')">
+      ${s}${s===setorSelecionado?' ✓':''}
+    </div>
+  `).join('');
+  document.getElementById('modalSetorPick').classList.add('open');
 }
-renderSetorSelect();
+function closeSetorPick() { document.getElementById('modalSetorPick').classList.remove('open'); }
+function selecionarSetor(nome) {
+  setorSelecionado = nome;
+  document.getElementById('setorPickLabel').textContent = nome;
+  document.getElementById('btnSetorPick').classList.add('selected');
+  closeSetorPick();
+}
 
 // Busca com debounce
 const searchInput = document.getElementById('searchInput');
@@ -549,7 +580,6 @@ function openSetores() {
 }
 function closeSetores() {
   document.getElementById('modalSetores').classList.remove('open');
-  renderSetorSelect();
 }
 function renderSetorList() {
   document.getElementById('setorList').innerHTML = setores.map((s, i) => `
@@ -602,7 +632,7 @@ async function salvar() {
   if (!selectedItem) { showToast('Selecione um item', 'error'); return; }
   const peso = parsePeso(document.getElementById('pesoInput').value);
   if (peso === null) { showToast('Digite o peso', 'error'); return; }
-  const setor = document.getElementById('setorSelect').value;
+  const setor = setorSelecionado;
 
   const entry = {
     data: todayKey, item: selectedItem, peso,
@@ -628,7 +658,9 @@ async function salvar() {
   btn.classList.remove('loading'); btn.disabled = false;
   clearItem();
   document.getElementById('pesoInput').value = '';
-  document.getElementById('setorSelect').value = '';
+  setorSelecionado = '';
+  document.getElementById('setorPickLabel').textContent = 'Selecione';
+  document.getElementById('btnSetorPick').classList.remove('selected');
 
   const pd = pesoDisplay(peso);
   showToast(`✓ ${selectedItem.split(' ').slice(0,2).join(' ')} — ${pd.num} ${pd.unit}`, 'success');
