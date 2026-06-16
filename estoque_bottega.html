@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1A1A1A">
 <title>Estoque · Bottega</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -16,123 +17,226 @@
   }
   html, body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overscroll-behavior: none; }
 
-  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px 12px; position: sticky; top: 0; z-index: 100; }
-  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  /* HEADER */
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 20px 0; position: sticky; top: 0; z-index: 100;
+    overflow: hidden; max-height: 120px; opacity: 1;
+    transition: max-height .25s ease, opacity .25s ease, padding .25s ease;
+  }
+  .header.hidden { max-height: 0; opacity: 0; padding-top: 0; border-bottom: none; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
   .logo { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; }
   .date-badge { font-size: 11px; color: var(--text-dim); background: var(--surface2); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); }
-  .header-subtitle { font-size: 13px; color: var(--text-dim); }
+  .header-subtitle { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
 
-  main { padding: 16px 16px 120px; max-width: 480px; margin: 0 auto; }
-  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: var(--gold-dim); text-transform: uppercase; margin: 20px 0 8px; }
+  /* NAV */
+  .nav-tabs {
+    display: flex; background: var(--surface); border-bottom: 1px solid var(--border);
+    overflow: hidden; max-height: 46px; opacity: 1;
+    transition: max-height .25s ease, opacity .25s ease;
+  }
+  .nav-tabs.hidden { max-height: 0; opacity: 0; border-bottom: none; }
+  .nav-tab {
+    flex: 1; padding: 10px 8px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim);
+    background: none; border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; font-family: var(--font); transition: color .2s, border-color .2s;
+  }
+  .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 
-  .toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 4px; }
-  .config-btn { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 12px; padding: 4px 10px; cursor: pointer; }
+  /* MAIN */
+  main { padding: 14px 16px 120px; max-width: 480px; margin: 0 auto; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: var(--gold-dim); text-transform: uppercase; margin: 18px 0 8px; }
 
+  /* TOOLBAR */
+  .toolbar { display: flex; justify-content: flex-end; margin-bottom: 2px; }
+  .config-btn { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 11px; padding: 4px 10px; cursor: pointer; }
+
+  /* BUSCA */
   .search-wrap { position: relative; }
-  .search-wrap input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 17px; font-family: var(--font); padding: 14px 44px 14px 16px; outline: none; transition: border-color .2s; }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 15px; pointer-events: none; }
+  .search-wrap input {
+    width: 100%; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-size: 16px;
+    font-family: var(--font); padding: 13px 44px 13px 40px; outline: none; transition: border-color .2s;
+  }
   .search-wrap input:focus { border-color: var(--gold); }
   .search-wrap input::placeholder { color: var(--text-dim); }
-  .search-clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: var(--surface2); border: none; color: var(--text-dim); font-size: 16px; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; }
+  .search-clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: var(--surface2); border: none; color: var(--text-dim);
+    font-size: 14px; width: 24px; height: 24px; border-radius: 50%;
+    cursor: pointer; display: none; align-items: center; justify-content: center;
+  }
   .search-clear.visible { display: flex; }
 
+  /* DROPDOWN */
   .dropdown { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-top: 6px; max-height: 220px; overflow-y: auto; display: none; -webkit-overflow-scrolling: touch; }
   .dropdown.open { display: block; }
-  .dropdown-item { padding: 13px 16px; font-size: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .dropdown-item { padding: 12px 16px; font-size: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
   .dropdown-item:last-child { border-bottom: none; }
   .dropdown-item:active { background: var(--surface2); }
   .dropdown-item mark { background: none; color: var(--gold); font-weight: 700; }
   .dropdown-empty { padding: 12px 16px; font-size: 14px; color: var(--text-dim); }
-  .dropdown-add { padding: 13px 16px; font-size: 14px; border-top: 1px solid var(--border); cursor: pointer; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+  .dropdown-add { padding: 12px 16px; font-size: 13px; border-top: 1px solid var(--border); cursor: pointer; color: var(--blue); display: flex; align-items: center; gap: 8px; }
   .dropdown-add:active { background: var(--surface2); }
 
-  .selected-chip { display: none; align-items: center; gap: 10px; background: var(--surface2); border: 1.5px solid var(--gold); border-radius: var(--radius); padding: 12px 14px; margin-top: 8px; }
-  .selected-chip.visible { display: flex; }
+  /* CHIP */
+  .selected-chip { display: none; align-items: center; gap: 10px; background: var(--surface2); border: 1.5px solid var(--gold); border-radius: var(--radius); padding: 11px 14px; margin-top: 8px; }
+  .selected-chip.visible { display: flex; animation: fadeSlide .2s ease; }
   .selected-chip.custom { border-color: var(--blue); }
-  .chip-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
+  .chip-name { flex: 1; font-size: 15px; font-weight: 600; }
   .chip-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px; background: var(--blue); color: white; letter-spacing: 0.05em; }
-  .chip-remove { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 2px 4px; }
+  .chip-remove { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 2px 4px; line-height: 1; }
 
+  /* INPUTS */
   .input-row { display: flex; gap: 10px; }
   .input-group { flex: 1; }
   .input-group label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-  .input-group input, .input-group select { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 17px; font-family: var(--font); padding: 13px 14px; outline: none; transition: border-color .2s; appearance: none; }
+  .input-group input, .input-group select { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 17px; font-family: var(--font); padding: 12px 14px; outline: none; transition: border-color .2s; appearance: none; }
   .input-group input:focus, .input-group select:focus { border-color: var(--gold); }
-  .input-hint { font-size: 10px; color: var(--text-dim); margin-top: 5px; }
-
-  /* Setor com botão de editar */
-  .setor-row { display: flex; gap: 8px; align-items: flex-end; }
-  .setor-row .input-group { flex: 1; }
-  .btn-edit-setor { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text-dim); font-size: 18px; padding: 13px 14px; cursor: pointer; white-space: nowrap; transition: border-color .2s; }
+  .input-hint { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+  .select-wrap { position: relative; }
+  .select-wrap::after { content: "▾"; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; font-size: 13px; }
+  .select-wrap select { padding-right: 34px; }
+  .btn-edit-setor { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text-dim); font-size: 17px; padding: 12px 13px; cursor: pointer; transition: border-color .2s; }
   .btn-edit-setor:active { border-color: var(--gold); }
 
-  .select-wrap { position: relative; }
-  .select-wrap::after { content: "▾"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; font-size: 14px; }
-  .select-wrap select { padding-right: 36px; }
-
-  .btn-save { width: 100%; background: var(--gold); color: #0F0F0F; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 700; font-family: var(--font); padding: 16px; margin-top: 24px; cursor: pointer; transition: opacity .2s, transform .1s; }
+  /* BOTÃO SALVAR */
+  .btn-save {
+    width: 100%; background: var(--gold); color: #0F0F0F; border: none;
+    border-radius: var(--radius); font-size: 16px; font-weight: 700;
+    font-family: var(--font); padding: 16px; margin-top: 20px; cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
   .btn-save:active { transform: scale(0.98); opacity: .85; }
   .btn-save:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-save .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(0,0,0,.3); border-top-color: #000; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
-  .btn-save.loading span { display: none; }
+  .btn-save .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(0,0,0,.3); border-top-color: #000; border-radius: 50%; animation: spin .7s linear infinite; }
+  .btn-save.loading .btn-label { display: none; }
   .btn-save.loading .spinner { display: block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 12px 22px; font-size: 14px; font-weight: 600; white-space: nowrap; transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s; opacity: 0; z-index: 999; }
+  /* LOG */
+  .log-header { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; margin-bottom: 8px; }
+  .log-count { background: var(--gold); color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; min-width: 24px; text-align: center; }
+  .log-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .log-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 14px;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+    animation: fadeSlide .22s ease;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .log-item.custom-item { border-color: var(--blue); }
+  .log-item.removing { transform: translateX(110%); opacity: 0; }
+  .log-item-info { flex: 1; min-width: 0; }
+  .log-item-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-item-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .log-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+  .log-item-num { font-size: 20px; font-weight: 800; color: var(--gold); line-height: 1; }
+  .log-item-unit { font-size: 10px; font-weight: 600; color: var(--gold-dim); letter-spacing: 0.06em; }
+  .log-item-del { background: none; border: none; color: var(--red); font-size: 14px; cursor: pointer; padding: 4px 6px; opacity: 0; transition: opacity .2s; position: absolute; top: 6px; right: 6px; line-height: 1; }
+  .log-item:active .log-item-del { opacity: 1; }
+
+  .log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 32px 0; }
+  .log-empty-icon { font-size: 32px; margin-bottom: 8px; opacity: .35; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 40px; padding: 11px 20px; font-size: 13px; font-weight: 600;
+    white-space: nowrap; transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+    opacity: 0; z-index: 999;
+  }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   .toast.success { border-color: var(--green); color: var(--green); }
   .toast.error { border-color: var(--red); color: var(--red); }
 
-  .log-header { display: flex; align-items: center; justify-content: space-between; margin-top: 28px; margin-bottom: 8px; }
-  .log-count { background: var(--gold); color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
-  .log-list { display: flex; flex-direction: column; gap: 8px; }
-  .log-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
-  .log-item.custom-item { border-color: var(--blue); }
-  .log-item-info { flex: 1; }
-  .log-item-name { font-size: 14px; font-weight: 600; }
-  .log-item-meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-  .log-item-peso { font-size: 16px; font-weight: 700; color: var(--gold); min-width: 60px; text-align: right; }
-  .log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 24px 0; }
-
   /* MODAIS */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 480px; }
-  .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-  .modal p { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
+  .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 480px; animation: slideUp .25s ease; }
+  .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.5; }
   .modal input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 15px; font-family: var(--font); padding: 12px 14px; outline: none; margin-bottom: 12px; }
   .modal input:focus { border-color: var(--gold); }
   .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
   .btn-cancel { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-dim); font-size: 15px; font-weight: 600; padding: 13px; cursor: pointer; }
   .btn-confirm { flex: 2; background: var(--gold); border: none; border-radius: var(--radius); color: #000; font-size: 15px; font-weight: 700; padding: 13px; cursor: pointer; }
   .btn-blue { flex: 2; background: var(--blue); border: none; border-radius: var(--radius); color: #fff; font-size: 15px; font-weight: 700; padding: 13px; cursor: pointer; }
-
-  /* Lista de setores no modal */
-  .setor-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 260px; overflow-y: auto; }
+  .setor-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 240px; overflow-y: auto; }
   .setor-tag { display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; gap: 10px; }
   .setor-tag-name { flex: 1; font-size: 14px; font-weight: 500; }
   .setor-tag-remove { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .setor-add-row { display: flex; gap: 8px; }
   .setor-add-row input { flex: 1; margin-bottom: 0; }
   .btn-add-setor { background: var(--gold); border: none; border-radius: var(--radius); color: #000; font-size: 14px; font-weight: 700; padding: 12px 16px; cursor: pointer; white-space: nowrap; }
+
+  /* RELATÓRIOS */
+  .rel-controls { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+  .rel-controls .input-group { flex: 1; }
+  .rel-controls input[type="date"] { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 15px; font-family: var(--font); padding: 12px 14px; outline: none; appearance: none; color-scheme: dark; }
+  .rel-controls input[type="date"]:focus { border-color: var(--gold); }
+  .btn-relatorio { background: var(--gold); color: #0F0F0F; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 700; font-family: var(--font); padding: 13px 18px; cursor: pointer; white-space: nowrap; transition: opacity .2s; }
+  .btn-relatorio:disabled { opacity: .4; cursor: not-allowed; }
+  .rel-spinner { display: none; text-align: center; padding: 40px 0; color: var(--text-dim); font-size: 13px; }
+  .rel-spinner .spin { display: inline-block; width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px; }
+  .rel-spinner.visible { display: block; }
+  .rel-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 40px 0; display: none; }
+  .rel-empty.visible { display: block; }
+  .rel-table-wrap { display: none; }
+  .rel-table-wrap.visible { display: block; animation: fadeSlide .2s ease; }
+  .rel-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  .rel-table { width: 100%; border-collapse: collapse; }
+  .rel-table th { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--gold-dim); text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .rel-table th:last-child { text-align: right; }
+  .rel-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .rel-table td:last-child { text-align: right; font-weight: 700; color: var(--gold); }
+  .rel-table tr:last-child td { border-bottom: none; }
+  .rel-table tbody tr:nth-child(even) { background: var(--surface2); }
+  .rel-total { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 12px 14px; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); }
+  .rel-total-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; }
+  .rel-total-val { font-size: 15px; font-weight: 800; color: var(--gold); }
+
+  /* ANIMAÇÕES */
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(40px); } to { transform: translateY(0); } }
 </style>
 </head>
 <body>
 
-<div class="header">
+<div class="header" id="mainHeader">
   <div class="header-top">
     <span class="logo">Bottega · Estoque</span>
     <span class="date-badge" id="dateBadge"></span>
   </div>
   <div class="header-subtitle">Contagem de inventário</div>
 </div>
+<div class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" onclick="showScreen('estoque')">📦 Estoque</button>
+  <button class="nav-tab" onclick="showScreen('relatorios')">📊 Relatórios</button>
+</div>
 
 <main>
+
+<!-- TELA ESTOQUE -->
+<div class="screen active" id="screen-estoque">
   <div class="toolbar">
     <button class="config-btn" onclick="openConfig()">⚙ Google Sheets</button>
   </div>
 
   <div class="section-label">Item</div>
   <div class="search-wrap">
+    <span class="search-icon">🔍</span>
     <input type="text" id="searchInput" placeholder="Digite o nome do item..." autocomplete="off" autocorrect="off" spellcheck="false">
     <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
   </div>
@@ -147,22 +251,20 @@
   <div class="input-row">
     <div class="input-group">
       <label>Peso (kg)</label>
-      <input type="text" id="pesoInput" placeholder="3.5 ou =2*1.75" inputmode="decimal" autocomplete="off">
-      <div class="input-hint">Use = para fórmula: =10*1.5</div>
+      <input type="text" id="pesoInput" placeholder="=10*1.5 ou 3.5" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="input-hint">Use = para cálculo: =2*1.75</div>
     </div>
     <div class="input-group">
       <label>Setor</label>
-      <div style="display:flex; gap:8px;">
-        <div class="select-wrap" style="flex:1">
-          <select id="setorSelect"></select>
-        </div>
-        <button class="btn-edit-setor" onclick="openSetores()" title="Gerenciar setores">✏️</button>
+      <div style="display:flex;gap:8px;">
+        <div class="select-wrap" style="flex:1"><select id="setorSelect"></select></div>
+        <button class="btn-edit-setor" onclick="openSetores()">✏️</button>
       </div>
     </div>
   </div>
 
   <button class="btn-save" id="btnSave" onclick="salvar()">
-    <span>Salvar lançamento</span>
+    <span class="btn-label">✓ Salvar lançamento</span>
     <div class="spinner"></div>
   </button>
 
@@ -171,8 +273,35 @@
     <span class="log-count" id="logCount">0</span>
   </div>
   <div class="log-list" id="logList">
-    <div class="log-empty">Nenhum lançamento ainda</div>
+    <div class="log-empty"><div class="log-empty-icon">📋</div>Nenhum lançamento ainda</div>
   </div>
+</div>
+
+<!-- TELA RELATÓRIOS -->
+<div class="screen" id="screen-relatorios">
+  <div class="section-label" style="margin-top:8px">Consolidado por data</div>
+  <div class="rel-controls">
+    <div class="input-group">
+      <label>Data</label>
+      <input type="date" id="relDate">
+    </div>
+    <button class="btn-relatorio" id="btnRelatorio" onclick="gerarRelatorio()">Gerar</button>
+  </div>
+  <div class="rel-spinner" id="relSpinner"><div class="spin"></div><br>Consolidando...</div>
+  <div class="rel-empty" id="relEmpty">Nenhum lançamento encontrado para esta data.</div>
+  <div class="rel-table-wrap" id="relTableWrap">
+    <div class="rel-meta" id="relMeta"></div>
+    <table class="rel-table">
+      <thead><tr><th>Produto</th><th>Total</th></tr></thead>
+      <tbody id="reltbody"></tbody>
+    </table>
+    <div class="rel-total">
+      <span class="rel-total-label">Total de itens</span>
+      <span class="rel-total-val" id="relTotalItens">—</span>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -220,7 +349,6 @@
 </div>
 
 <script>
-// ── Itens ─────────────────────────────────────────────────────────────────
 const ITENS = [
   'Chocolate Calleb 50%','Abacaxi Perola','Abobrinha Italiana','Alecrim - Kg',
   'Alf Crespa Hidrop','Alface Frisee','Alface Roxa Hidro','Alho','Amora - Kg',
@@ -298,25 +426,29 @@ const SETORES_PADRAO = [
   'Geladeira Milanesa','Congelada','Seco','Salão','Bar','Lucas','Outros'
 ];
 
-// ── State ─────────────────────────────────────────────────────────────────
+// Estado
 let selectedItem = null;
 let isCustomItem = false;
 let log = JSON.parse(localStorage.getItem('estoqueLog') || '[]');
 let config = JSON.parse(localStorage.getItem('estoqueConfig') || '{}');
 let setores = JSON.parse(localStorage.getItem('estoqueSetores') || 'null') || [...SETORES_PADRAO];
 let searchQuery = '';
+let searchTimer = null;
 
-// ── Date ──────────────────────────────────────────────────────────────────
+// Data
 const now = new Date();
 document.getElementById('dateBadge').textContent = now.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'});
 const todayKey = now.toLocaleDateString('pt-BR');
 
-// ── Normalize ─────────────────────────────────────────────────────────────
+// Utilitários
 function normalize(str) {
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
+function vibrar() {
+  if (navigator.vibrate) navigator.vibrate(40);
+}
 
-// ── Render Select de Setores ──────────────────────────────────────────────
+// Setor
 function renderSetorSelect() {
   const sel = document.getElementById('setorSelect');
   const current = sel.value;
@@ -325,7 +457,7 @@ function renderSetorSelect() {
 }
 renderSetorSelect();
 
-// ── Search ────────────────────────────────────────────────────────────────
+// Busca com debounce
 const searchInput = document.getElementById('searchInput');
 const dropdown = document.getElementById('dropdown');
 const searchClear = document.getElementById('searchClear');
@@ -333,11 +465,14 @@ const searchClear = document.getElementById('searchClear');
 searchInput.addEventListener('input', function() {
   searchQuery = this.value.trim();
   searchClear.classList.toggle('visible', searchQuery.length > 0);
+  clearTimeout(searchTimer);
   if (!searchQuery) { dropdown.classList.remove('open'); return; }
+  searchTimer = setTimeout(() => renderDropdown(searchQuery), 120);
+});
 
-  const nq = normalize(searchQuery);
+function renderDropdown(q) {
+  const nq = normalize(q);
   const results = ITENS.filter(i => normalize(i).includes(nq)).slice(0, 20);
-
   let html = results.length === 0
     ? '<div class="dropdown-empty">Nenhum item encontrado</div>'
     : results.map(item => {
@@ -356,11 +491,10 @@ searchInput.addEventListener('input', function() {
         }
         return `<div class="dropdown-item" onclick="selectItem('${item.replace(/'/g,"\\'")}',false)">${out}</div>`;
       }).join('');
-
-  html += `<div class="dropdown-add" onclick="openNovoItem()">➕ Adicionar "<strong>${searchQuery}</strong>" como novo item</div>`;
+  html += `<div class="dropdown-add" onclick="openNovoItem()">➕ Adicionar "<strong>${q}</strong>" como novo item</div>`;
   dropdown.innerHTML = html;
   dropdown.classList.add('open');
-});
+}
 
 function selectItem(name, isCustom) {
   selectedItem = name; isCustomItem = !!isCustom;
@@ -392,7 +526,7 @@ document.addEventListener('click', e => {
     dropdown.classList.remove('open');
 });
 
-// ── Novo Item ─────────────────────────────────────────────────────────────
+// Novo Item
 function openNovoItem() {
   dropdown.classList.remove('open');
   document.getElementById('novoItemInput').value = searchQuery;
@@ -407,7 +541,7 @@ function confirmarNovoItem() {
   selectItem(nome, true);
 }
 
-// ── Gerenciar Setores ─────────────────────────────────────────────────────
+// Setores
 function openSetores() {
   renderSetorList();
   document.getElementById('modalSetores').classList.add('open');
@@ -417,22 +551,19 @@ function closeSetores() {
   document.getElementById('modalSetores').classList.remove('open');
   renderSetorSelect();
 }
-
 function renderSetorList() {
   document.getElementById('setorList').innerHTML = setores.map((s, i) => `
     <div class="setor-tag">
       <span class="setor-tag-name">${s}</span>
-      <button class="setor-tag-remove" onclick="removerSetor(${i})" title="Remover">✕</button>
+      <button class="setor-tag-remove" onclick="removerSetor(${i})">✕</button>
     </div>
   `).join('') || '<div style="color:var(--text-dim);font-size:13px;padding:8px 0">Nenhum setor cadastrado</div>';
 }
-
 function removerSetor(idx) {
   setores.splice(idx, 1);
   localStorage.setItem('estoqueSetores', JSON.stringify(setores));
   renderSetorList();
 }
-
 function adicionarSetor() {
   const input = document.getElementById('novoSetorInput');
   const nome = input.value.trim();
@@ -445,16 +576,28 @@ function adicionarSetor() {
   showToast(`✓ "${nome}" adicionado`, 'success');
 }
 
-// ── Peso com fórmula ──────────────────────────────────────────────────────
+// Peso
 function parsePeso(v) {
-  v = v.trim();
+  v = v.trim().replace(',', '.');
   if (!v) return null;
-  if (v.startsWith('=')) return v;
-  const n = parseFloat(v.replace(',', '.'));
-  return isNaN(n) ? null : n;
+  const raw = v.startsWith('=') ? v.slice(1) : v;
+  if (!raw) return null;
+  if (!/^[\d\.\+\-\*\/\(\)\s]+$/.test(raw)) return null;
+  return '=' + raw;
 }
 
-// ── Salvar ────────────────────────────────────────────────────────────────
+function pesoDisplay(v) {
+  if (!v) return { num: '', unit: '' };
+  if (typeof v === 'string' && v.startsWith('=')) {
+    try {
+      const calc = Function('"use strict"; return (' + v.slice(1) + ')')();
+      return { num: parseFloat(calc).toFixed(3), unit: 'kg' };
+    } catch { return { num: v, unit: '' }; }
+  }
+  return { num: Number(v).toFixed(3), unit: 'kg' };
+}
+
+// Salvar
 async function salvar() {
   if (!selectedItem) { showToast('Selecione um item', 'error'); return; }
   const peso = parsePeso(document.getElementById('pesoInput').value);
@@ -465,7 +608,8 @@ async function salvar() {
     data: todayKey, item: selectedItem, peso,
     setor: setor || '-',
     hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}),
-    isCustom: isCustomItem
+    isCustom: isCustomItem,
+    id: Date.now()
   };
 
   const btn = document.getElementById('btnSave');
@@ -480,43 +624,180 @@ async function salvar() {
     } catch(e) {}
   }
 
+  vibrar();
   btn.classList.remove('loading'); btn.disabled = false;
   clearItem();
   document.getElementById('pesoInput').value = '';
   document.getElementById('setorSelect').value = '';
 
-  const pd = typeof peso === 'string' ? peso : peso.toFixed(3)+' kg';
-  showToast(`✓ ${selectedItem.split(' ').slice(0,2).join(' ')} — ${pd}`, 'success');
+  const pd = pesoDisplay(peso);
+  showToast(`✓ ${selectedItem.split(' ').slice(0,2).join(' ')} — ${pd.num} ${pd.unit}`, 'success');
   renderLog();
+
+  setTimeout(() => {
+    document.getElementById('logList').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
 }
 
-// ── Log ───────────────────────────────────────────────────────────────────
+// Log
 function renderLog() {
   const todayLog = log.filter(e => e.data === todayKey);
   document.getElementById('logCount').textContent = todayLog.length;
   const list = document.getElementById('logList');
-  if (!todayLog.length) { list.innerHTML = '<div class="log-empty">Nenhum lançamento ainda</div>'; return; }
+  if (!todayLog.length) {
+    list.innerHTML = '<div class="log-empty"><div class="log-empty-icon">📋</div>Nenhum lançamento ainda</div>';
+    return;
+  }
   list.innerHTML = todayLog.map(e => {
-    const pd = typeof e.peso === 'string' ? e.peso : Number(e.peso).toFixed(3);
-    return `<div class="log-item${e.isCustom?' custom-item':''}">
+    const pd = pesoDisplay(e.peso);
+    return `<div class="log-item${e.isCustom?' custom-item':''}" id="logitem-${e.id||0}">
       <div class="log-item-info">
         <div class="log-item-name">${e.item}${e.isCustom?' <span style="font-size:10px;color:var(--blue)">(novo)</span>':''}</div>
         <div class="log-item-meta">${e.setor} · ${e.hora}</div>
       </div>
-      <div class="log-item-peso">${pd}</div>
+      <div class="log-item-right">
+        <span class="log-item-num">${pd.num}</span>
+        <span class="log-item-unit">${pd.unit}</span>
+      </div>
+      <button class="log-item-del" onclick="deletarItem(${e.id||0})">✕</button>
     </div>`;
   }).join('');
+
+  list.querySelectorAll('.log-item').forEach(el => initSwipe(el));
 }
 renderLog();
 
-// ── Toast ─────────────────────────────────────────────────────────────────
+function deletarItem(id) {
+  const el = document.getElementById('logitem-' + id);
+  if (el) { el.classList.add('removing'); vibrar(); }
+  setTimeout(() => {
+    log = log.filter(e => (e.id||0) !== id);
+    localStorage.setItem('estoqueLog', JSON.stringify(log));
+    renderLog();
+  }, 200);
+}
+
+// Swipe para deletar
+function initSwipe(el) {
+  let startX = 0, dx = 0, dragging = false;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX; dx = 0; dragging = true;
+  }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    dx = e.touches[0].clientX - startX;
+    if (dx < 0) el.style.transform = `translateX(${Math.max(dx, -120)}px)`;
+  }, { passive: true });
+  el.addEventListener('touchend', () => {
+    dragging = false;
+    if (dx < -80) {
+      const id = parseInt(el.id.replace('logitem-','')) || 0;
+      deletarItem(id);
+    } else {
+      el.style.transform = '';
+    }
+  });
+}
+
+// Toast
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type} show`;
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-// ── Config ────────────────────────────────────────────────────────────────
+// Header some com teclado
+(function() {
+  const header = document.getElementById('mainHeader');
+  const nav = document.getElementById('navTabs');
+  document.addEventListener('focusin', e => {
+    if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) {
+      header.classList.add('hidden');
+      nav.classList.add('hidden');
+    }
+  });
+  document.addEventListener('focusout', () => {
+    setTimeout(() => {
+      if (!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement && document.activeElement.tagName)) {
+        header.classList.remove('hidden');
+        nav.classList.remove('hidden');
+      }
+    }, 120);
+  });
+})();
+
+// Navegação
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelector(`.nav-tab[onclick*="${name}"]`).classList.add('active');
+}
+
+// Relatórios
+(function() {
+  const d = new Date();
+  document.getElementById('relDate').value =
+    `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+})();
+
+async function gerarRelatorio() {
+  const dateInput = document.getElementById('relDate').value;
+  if (!dateInput) { showToast('Selecione uma data', 'error'); return; }
+  const [yyyy, mm, dd] = dateInput.split('-');
+  const dataFormatada = `${dd}/${mm}/${yyyy}`;
+
+  document.getElementById('relSpinner').classList.add('visible');
+  document.getElementById('relEmpty').classList.remove('visible');
+  document.getElementById('relTableWrap').classList.remove('visible');
+  document.getElementById('btnRelatorio').disabled = true;
+
+  try {
+    let resultado = null;
+    if (config.scriptUrl) {
+      try {
+        const url = config.scriptUrl + '?action=relatorio&data=' + encodeURIComponent(dataFormatada);
+        const resp = await fetch(url, { method:'GET', mode:'cors' });
+        if (resp.ok) resultado = await resp.json();
+      } catch(e) {}
+    }
+    if (!resultado) resultado = consolidarLocal(dataFormatada);
+    exibirRelatorio(resultado, dataFormatada);
+  } finally {
+    document.getElementById('relSpinner').classList.remove('visible');
+    document.getElementById('btnRelatorio').disabled = false;
+  }
+}
+
+function consolidarLocal(dataFormatada) {
+  const dodia = log.filter(e => e.data === dataFormatada);
+  if (!dodia.length) return [];
+  const mapa = {};
+  for (const e of dodia) {
+    let val = 0;
+    if (typeof e.peso === 'string' && e.peso.startsWith('=')) {
+      try { val = Function('"use strict"; return (' + e.peso.slice(1) + ')')(); } catch { val = 0; }
+    } else { val = parseFloat(e.peso) || 0; }
+    mapa[e.item] = (mapa[e.item] || 0) + val;
+  }
+  return Object.entries(mapa).sort((a,b) => a[0].localeCompare(b[0]))
+    .map(([item, total]) => ({ item, total: parseFloat(total.toFixed(3)) }));
+}
+
+function exibirRelatorio(dados, dataFormatada) {
+  if (!dados || !dados.length) {
+    document.getElementById('relEmpty').classList.add('visible');
+    return;
+  }
+  document.getElementById('reltbody').innerHTML = dados.map(r =>
+    `<tr><td>${r.item}</td><td>${Number(r.total).toFixed(3)} kg</td></tr>`
+  ).join('');
+  document.getElementById('relMeta').textContent = `${dados.length} produto(s) · ${dataFormatada}`;
+  document.getElementById('relTotalItens').textContent = dados.length;
+  document.getElementById('relTableWrap').classList.add('visible');
+}
+
+// Config
 function openConfig() {
   document.getElementById('scriptUrl').value = config.scriptUrl || '';
   document.getElementById('modalConfig').classList.add('open');
@@ -528,41 +809,6 @@ function saveConfig() {
   closeConfig();
   showToast('Configuração salva', 'success');
 }
-</script>
-
- <script>
-// ── Header hide on focus ──────────────────────────────────────────────────
-(function() {
-  const header = document.querySelector('.header');
-  let hideTimer = null;
-
-  function hideHeader() {
-    header.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease';
-    header.style.transform = 'translateY(-100%)';
-    header.style.opacity = '0';
-  }
-
-  function showHeader() {
-    clearTimeout(hideTimer);
-    header.style.transition = 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease';
-    header.style.transform = 'translateY(0)';
-    header.style.opacity = '1';
-  }
-
-  // Esconde ao focar em qualquer input ou select
-  document.addEventListener('focusin', function(e) {
-    if (e.target.matches('input, select, textarea')) {
-      hideTimer = setTimeout(hideHeader, 80);
-    }
-  });
-
-  // Mostra ao sair do campo
-  document.addEventListener('focusout', function(e) {
-    if (e.target.matches('input, select, textarea')) {
-      showHeader();
-    }
-  });
-})();
 </script>
 </body>
 </html>
