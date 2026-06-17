@@ -6,6 +6,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1A1A1A">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Bottega">
 <title>Estoque · Bottega</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -843,13 +847,17 @@ function consolidarLocal(dataFormatada) {
     .map(([item, total]) => ({ item, total: parseFloat(total.toFixed(3)) }));
 }
 
+function formatNumBR(n) {
+  return parseFloat((Number(n) || 0).toFixed(3)).toString().replace('.', ',');
+}
+
 function exibirRelatorio(dados, dataFormatada) {
   if (!dados || !dados.length) {
     document.getElementById('relEmpty').classList.add('visible');
     return;
   }
   document.getElementById('reltbody').innerHTML = dados.map(r =>
-    `<tr><td>${r.item}</td><td>${Number(r.total).toFixed(3)} kg</td></tr>`
+    `<tr><td>${r.item}</td><td>${formatNumBR(r.total)} kg</td></tr>`
   ).join('');
   document.getElementById('relMeta').textContent = `${dados.length} produto(s) · ${dataFormatada}`;
   document.getElementById('relTotalItens').textContent = dados.length;
