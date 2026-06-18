@@ -1,6 +1,6 @@
 {
-  "name": "Bottega · Estoque",
-  "short_name": "Bottega",
+  "name": "Controle · Estoque",
+  "short_name": "Controle",
   "description": "Controle de inventário e contagem de estoque do Bottega",
   "start_url": "./Controle.html",
   "scope": "./",
