@@ -256,3 +256,675 @@
   </div>
 </div>
 <div class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" onclick="showScreen('estoque')">📦 Estoque</button>
+  <button class="nav-tab" onclick="showScreen('relatorios')">📊 Relatórios</button>
+</div>
+
+<main>
+
+<!-- TELA ESTOQUE -->
+<div class="screen active" id="screen-estoque">
+  <div class="toolbar">
+    <button class="config-btn" onclick="openConfig()">⚙ Configurações</button>
+  </div>
+
+  <div class="section-label">Item</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Digite o nome do item..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="dropdown" id="dropdown"></div>
+  <div class="selected-chip" id="selectedChip">
+    <div style="flex:1;min-width:0">
+      <div class="chip-name" id="chipName"></div>
+      <div style="margin-top:3px;display:flex;gap:6px;align-items:center">
+        <span class="chip-grupo" id="chipGrupo" style="display:none"></span>
+        <span class="chip-badge" id="chipBadge" style="display:none">NOVO</span>
+      </div>
+    </div>
+    <button class="chip-remove" onclick="clearItem()">✕</button>
+  </div>
+
+  <div class="section-label">Detalhes</div>
+  <div class="input-row">
+    <div class="input-group">
+      <label>Quantidade / Peso</label>
+      <input type="text" id="pesoInput" placeholder="Ex: 1,5 ou =2*0,8" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="input-hint">Vírgula ou ponto como decimal. Use = para cálculo.</div>
+    </div>
+    <div class="input-group">
+      <label>Setor</label>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-setor-pick" id="btnSetorPick" onclick="openSetorPick()" type="button">
+          <span id="setorPickLabel">Selecione</span>
+          <span style="color:var(--text-secundario);font-size:13px">▾</span>
+        </button>
+        <button class="btn-edit-setor" onclick="openSetores()" type="button">✏️</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-save" id="btnSave" onclick="salvar()">
+    <span class="btn-label">✓ Salvar lançamento</span>
+    <div class="spinner"></div>
+  </button>
+
+  <div class="log-header">
+    <div class="section-label" style="margin:0">Lançados — <span id="logDataLabel"></span></div>
+    <span class="log-count" id="logCount">0</span>
+  </div>
+  <div class="log-list" id="logList">
+    <div class="log-empty"><div class="log-empty-icon">📋</div>Nenhum lançamento ainda</div>
+  </div>
+</div>
+
+<!-- TELA RELATÓRIOS -->
+<div class="screen" id="screen-relatorios">
+  <div class="section-label" style="margin-top:8px">Filtros</div>
+  <div class="rel-filtros">
+    <div class="rel-filtros-row">
+      <div class="input-group">
+        <label>Data inicial</label>
+        <input type="date" id="relDateIni">
+      </div>
+      <div class="input-group">
+        <label>Data final</label>
+        <input type="date" id="relDateFim">
+      </div>
+    </div>
+    <div class="input-group">
+      <label>Grupo (opcional)</label>
+      <select class="rel-select-grupo" id="relGrupo">
+        <option value="">Todos os grupos</option>
+        <option value="Hortifruti">Hortifruti</option>
+        <option value="Laticínios">Laticínios</option>
+        <option value="Proteínas">Proteínas</option>
+        <option value="Mercearia">Mercearia</option>
+        <option value="Massas">Massas</option>
+        <option value="Preparados">Preparados</option>
+        <option value="Utensílios">Utensílios</option>
+      </select>
+    </div>
+    <button class="btn-relatorio" id="btnRelatorio" onclick="gerarRelatorio()">📊 Gerar Relatório</button>
+  </div>
+  <div class="rel-error" id="relError"></div>
+  <div class="rel-spinner" id="relSpinner"><div class="spin"></div><br>Consultando banco de dados...</div>
+  <div class="rel-empty" id="relEmpty">Nenhum lançamento encontrado para este filtro.</div>
+  <div class="rel-table-wrap" id="relTableWrap">
+    <div class="rel-meta" id="relMeta"></div>
+    <table class="rel-table">
+      <thead><tr><th>Produto</th><th>Grupo</th><th>Total</th></tr></thead>
+      <tbody id="reltbody"></tbody>
+    </table>
+    <div class="rel-total">
+      <span class="rel-total-label">Total de itens</span>
+      <span class="rel-total-val" id="relTotalItens">—</span>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal Config -->
+<div class="modal-overlay" id="modalConfig" onclick="if(event.target===this)closeConfig()">
+  <div class="modal">
+    <h2>⚙ Configurações</h2>
+    <p>Cole a URL do seu Google Apps Script para sincronizar com a planilha.</p>
+    <label style="font-size:11px;font-weight:700;color:var(--text-secundario);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">URL do Apps Script</label>
+    <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/...">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeConfig()">Cancelar</button>
+      <button class="btn-confirm" onclick="saveConfig()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Item -->
+<div class="modal-overlay" id="modalNovoItem" onclick="if(event.target===this)closeNovoItem()">
+  <div class="modal">
+    <h2>➕ Novo item</h2>
+    <p>Item não encontrado no catálogo. Digite o nome exato para registrar.</p>
+    <input type="text" id="novoItemInput" placeholder="Nome do item..." autocomplete="off" autocorrect="off">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeNovoItem()">Cancelar</button>
+      <button class="btn-blue" onclick="confirmarNovoItem()">Usar este item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Data -->
+<div class="modal-overlay" id="modalDataPicker" onclick="if(event.target===this)closeDataPicker()">
+  <div class="modal">
+    <h2>📅 Data do lançamento</h2>
+    <p>Por padrão é hoje. Mude para contagens que cruzam a meia-noite.</p>
+    <input type="date" id="dataPickerInput" style="color-scheme:light">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDataPicker()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmarData()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Selecionar Setor -->
+<div class="modal-overlay" id="modalSetorPick" onclick="if(event.target===this)closeSetorPick()">
+  <div class="modal">
+    <h2>📍 Selecionar Setor</h2>
+    <div class="setor-pick-list" id="setorPickList"></div>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn-cancel" onclick="closeSetorPick()" style="flex:1">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Gerenciar Setores -->
+<div class="modal-overlay" id="modalSetores" onclick="if(event.target===this)closeSetores()">
+  <div class="modal">
+    <h2>📍 Gerenciar Setores</h2>
+    <p>Adicione ou remova setores. Salvo no aparelho.</p>
+    <div class="setor-list" id="setorList"></div>
+    <div class="setor-add-row">
+      <input type="text" id="novoSetorInput" placeholder="Nome do novo setor..." autocomplete="off" onkeydown="if(event.key==='Enter')adicionarSetor()">
+      <button class="btn-add-setor" onclick="adicionarSetor()">+ Adicionar</button>
+    </div>
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="btn-confirm" onclick="closeSetores()" style="flex:1">Feito</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Catálogo carregado do itens.csv ────────────────────────────────────────
+let ITENS = [];
+let CATALOGO = [];
+const ITENS_CACHE_KEY = 'estoqueItensCache';
+const ITENS_CSV_URL = 'itens.csv';
+
+function parseCSV(texto) {
+  const linhas = texto.replace(/\r/g,'').split('\n').filter(l => l.trim().length);
+  const splitLinha = l => l.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(v => v.replace(/^"|"$/g,'').trim());
+  const cab = splitLinha(linhas[0]);
+  return linhas.slice(1).map(l => {
+    const vals = splitLinha(l);
+    const obj = {};
+    cab.forEach((h,i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+}
+function aplicarCatalogo(linhas) {
+  CATALOGO = linhas;
+  ITENS = linhas.map(l => l.nome).filter(Boolean);
+}
+(async function carregarItens() {
+  const cache = localStorage.getItem(ITENS_CACHE_KEY);
+  if (cache) { try { aplicarCatalogo(JSON.parse(cache)); } catch(e){} }
+  try {
+    const resp = await fetch(ITENS_CSV_URL, { cache:'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const linhas = parseCSV(await resp.text());
+    if (linhas.length) { aplicarCatalogo(linhas); localStorage.setItem(ITENS_CACHE_KEY, JSON.stringify(linhas)); }
+  } catch(e) { console.warn('itens.csv indisponível — usando cache.', e); }
+})();
+
+// ── Setores padrão ─────────────────────────────────────────────────────────
+const SETORES_PADRAO = ['Delivery','Fria','Praça Principal','Praça Sobremesa','Praca Proteína','Geladeira Milanesa','Congelada','Seco','Salão','Bar','Outros'];
+
+// ── Estado ─────────────────────────────────────────────────────────────────
+let selectedItem = null;
+let selectedCatalogItem = null; // objeto completo do catálogo
+let isCustomItem = false;
+let log = JSON.parse(localStorage.getItem('estoqueLog') || '[]');
+let config = JSON.parse(localStorage.getItem('estoqueConfig') || '{}');
+let setores = JSON.parse(localStorage.getItem('estoqueSetores') || 'null') || [...SETORES_PADRAO];
+let searchQuery = '';
+let searchTimer = null;
+let setorSelecionado = '';
+
+// ── Data ──────────────────────────────────────────────────────────────────
+const now = new Date();
+function formatDateKey(d) { return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+function formatDateLabel(d) { return d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}); }
+function parseDateKey(k) { const [dd,mm,yyyy]=k.split('/'); return new Date(+yyyy,+mm-1,+dd); }
+const todayKey = formatDateKey(now);
+let activeKey = todayKey;
+
+function atualizarDataBadge() {
+  const badge = document.getElementById('dateBadge');
+  const d = parseDateKey(activeKey);
+  const isAltered = activeKey !== todayKey;
+  badge.textContent = formatDateLabel(d) + (isAltered ? ' ✏️' : '');
+  badge.classList.toggle('altered', isAltered);
+  document.getElementById('logDataLabel').textContent = activeKey;
+}
+atualizarDataBadge();
+document.getElementById('dateBadge').onclick = function() {
+  const d = parseDateKey(activeKey);
+  document.getElementById('dataPickerInput').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('modalDataPicker').classList.add('open');
+};
+
+// Data picker
+function closeDataPicker() { document.getElementById('modalDataPicker').classList.remove('open'); }
+function confirmarData() {
+  const iso = document.getElementById('dataPickerInput').value;
+  if (!iso) { closeDataPicker(); return; }
+  const [yyyy,mm,dd] = iso.split('-');
+  activeKey = `${dd}/${mm}/${yyyy}`;
+  atualizarDataBadge();
+  renderLog();
+  closeDataPicker();
+  if (activeKey !== todayKey) showToast(`Data: ${activeKey}`, 'success');
+}
+
+// ── Utilitários ───────────────────────────────────────────────────────────
+function normalize(str) { return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+function vibrar() {
+  // Vibra apenas após confirmação de sucesso — 60ms discreto
+  try { if (navigator.vibrate) navigator.vibrate(60); } catch(e) {}
+}
+
+// ── Setor picker ──────────────────────────────────────────────────────────
+function openSetorPick() {
+  document.getElementById('setorPickList').innerHTML = setores.map(s =>
+    `<div class="setor-pick-item${s===setorSelecionado?' active':''}" onclick="selecionarSetor('${s.replace(/'/g,"\\'")}')">
+      ${s}${s===setorSelecionado?' ✓':''}
+    </div>`
+  ).join('');
+  document.getElementById('modalSetorPick').classList.add('open');
+}
+function closeSetorPick() { document.getElementById('modalSetorPick').classList.remove('open'); }
+function selecionarSetor(nome) {
+  setorSelecionado = nome;
+  document.getElementById('setorPickLabel').textContent = nome;
+  document.getElementById('btnSetorPick').classList.add('selected');
+  closeSetorPick();
+}
+
+// ── Busca ─────────────────────────────────────────────────────────────────
+const searchInput = document.getElementById('searchInput');
+const dropdown = document.getElementById('dropdown');
+const searchClear = document.getElementById('searchClear');
+
+searchInput.addEventListener('input', function() {
+  searchQuery = this.value.trim();
+  searchClear.classList.toggle('visible', searchQuery.length > 0);
+  clearTimeout(searchTimer);
+  if (!searchQuery) { dropdown.classList.remove('open'); return; }
+  searchTimer = setTimeout(() => renderDropdown(searchQuery), 120);
+});
+
+function renderDropdown(q) {
+  const nq = normalize(q);
+  const results = CATALOGO.filter(i => normalize(i.nome||'').includes(nq)).slice(0,20);
+  let html = '';
+  if (results.length === 0) {
+    html = '<div class="dropdown-empty">Nenhum item encontrado</div>';
+  } else {
+    html = results.map(item => {
+      const nome = item.nome || '';
+      const chars = nome.split('');
+      let out = '', nqArr = nq.split(''), qi = 0, inMark = false;
+      for (const ch of chars) {
+        const nch = normalize(ch);
+        if (qi < nqArr.length && nch === nqArr[qi]) {
+          if (!inMark) { out += '<mark>'; inMark = true; }
+          out += ch; qi++;
+          if (qi === nqArr.length && inMark) { out += '</mark>'; inMark = false; qi = 0; }
+        } else {
+          if (inMark) { out += '</mark>'; inMark = false; qi = 0; }
+          out += ch;
+        }
+      }
+      const grupo = item.grupo || item.categoria || '';
+      const metaHtml = grupo ? `<div class="dropdown-meta">${grupo}</div>` : '';
+      return `<div class="dropdown-item" onclick='selectItemFromCatalog(${JSON.stringify(item)})'>${out}${metaHtml}</div>`;
+    }).join('');
+  }
+  html += `<div class="dropdown-add" onclick="openNovoItem()">➕ Adicionar "<strong>${q}</strong>" como novo item</div>`;
+  dropdown.innerHTML = html;
+  dropdown.classList.add('open');
+}
+
+function selectItemFromCatalog(item) {
+  selectedItem = item.nome;
+  selectedCatalogItem = item;
+  isCustomItem = false;
+  document.getElementById('chipName').textContent = item.nome;
+  const grupoEl = document.getElementById('chipGrupo');
+  const grupo = item.grupo || item.categoria || '';
+  if (grupo) { grupoEl.textContent = grupo; grupoEl.style.display = 'inline-block'; }
+  else { grupoEl.style.display = 'none'; }
+  document.getElementById('chipBadge').style.display = 'none';
+  const chip = document.getElementById('selectedChip');
+  chip.classList.remove('custom');
+  chip.classList.add('visible');
+  searchInput.value = ''; searchQuery = '';
+  searchClear.classList.remove('visible');
+  dropdown.classList.remove('open');
+  document.getElementById('pesoInput').focus();
+}
+
+function selectItem(name, isCustom) {
+  selectedItem = name; selectedCatalogItem = null; isCustomItem = !!isCustom;
+  document.getElementById('chipName').textContent = name;
+  document.getElementById('chipGrupo').style.display = 'none';
+  document.getElementById('chipBadge').style.display = isCustomItem ? 'inline-block' : 'none';
+  const chip = document.getElementById('selectedChip');
+  chip.classList.toggle('custom', isCustomItem);
+  chip.classList.add('visible');
+  searchInput.value = ''; searchQuery = '';
+  searchClear.classList.remove('visible');
+  dropdown.classList.remove('open');
+  document.getElementById('pesoInput').focus();
+}
+
+function clearSearch() {
+  searchInput.value = ''; searchQuery = '';
+  searchClear.classList.remove('visible');
+  dropdown.classList.remove('open');
+}
+function clearItem() {
+  selectedItem = null; selectedCatalogItem = null; isCustomItem = false;
+  document.getElementById('selectedChip').classList.remove('visible');
+  searchInput.focus();
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap') && !e.target.closest('.dropdown'))
+    dropdown.classList.remove('open');
+});
+
+// ── Novo Item ─────────────────────────────────────────────────────────────
+function openNovoItem() {
+  dropdown.classList.remove('open');
+  document.getElementById('novoItemInput').value = searchQuery;
+  document.getElementById('modalNovoItem').classList.add('open');
+  setTimeout(() => document.getElementById('novoItemInput').focus(), 300);
+}
+function closeNovoItem() { document.getElementById('modalNovoItem').classList.remove('open'); }
+function confirmarNovoItem() {
+  const nome = document.getElementById('novoItemInput').value.trim();
+  if (!nome) return;
+  closeNovoItem();
+  selectItem(nome, true);
+}
+
+// ── Setores ───────────────────────────────────────────────────────────────
+function openSetores() { renderSetorList(); document.getElementById('modalSetores').classList.add('open'); }
+function closeSetores() { document.getElementById('modalSetores').classList.remove('open'); }
+function renderSetorList() {
+  document.getElementById('setorList').innerHTML = setores.map((s,i) =>
+    `<div class="setor-tag"><span class="setor-tag-name">${s}</span><button class="setor-tag-remove" onclick="removerSetor(${i})">✕</button></div>`
+  ).join('') || '<div style="color:var(--text-secundario);font-size:13px;padding:8px 0">Nenhum setor cadastrado</div>';
+}
+function removerSetor(idx) { setores.splice(idx,1); localStorage.setItem('estoqueSetores',JSON.stringify(setores)); renderSetorList(); }
+function adicionarSetor() {
+  const input = document.getElementById('novoSetorInput');
+  const nome = input.value.trim();
+  if (!nome) return;
+  if (setores.includes(nome)) { showToast('Setor já existe','error'); return; }
+  setores.push(nome); localStorage.setItem('estoqueSetores',JSON.stringify(setores));
+  input.value = ''; renderSetorList(); showToast(`✓ "${nome}" adicionado`,'success');
+}
+
+// ── Peso ──────────────────────────────────────────────────────────────────
+function parsePeso(v) {
+  v = v.trim().replace(',','.');
+  if (!v) return null;
+  const raw = v.startsWith('=') ? v.slice(1) : v;
+  if (!raw) return null;
+  if (!/^[\d\.\+\-\*\/\(\)\s]+$/.test(raw)) return null;
+  return '=' + raw;
+}
+
+function calcPeso(v) {
+  // Retorna valor numérico calculado
+  if (!v) return 0;
+  if (typeof v === 'string' && v.startsWith('=')) {
+    try { return Function('"use strict"; return (' + v.slice(1) + ')')() || 0; } catch { return 0; }
+  }
+  return parseFloat(v) || 0;
+}
+
+function pesoDisplay(v) {
+  if (!v) return { num: '', unit: 'kg' };
+  const n = calcPeso(v);
+  // Remove zeros desnecessários: 220.000→220, 1.500→1,5
+  const formatted = parseFloat(n.toFixed(3)).toString().replace('.', ',');
+  return { num: formatted, unit: 'kg' };
+}
+
+function pesoParaEnvio(v) {
+  // Sempre envia com vírgula como decimal para a planilha
+  const n = calcPeso(v);
+  return parseFloat(n.toFixed(3)).toString().replace('.', ',');
+}
+
+// ── Salvar ────────────────────────────────────────────────────────────────
+async function salvar() {
+  if (!selectedItem) { showToast('Selecione um item','error'); return; }
+  const peso = parsePeso(document.getElementById('pesoInput').value);
+  if (peso === null) { showToast('Digite a quantidade','error'); return; }
+  const setor = setorSelecionado;
+
+  // Pega grupo e valor do catálogo se disponível
+  const grupo = selectedCatalogItem ? (selectedCatalogItem.grupo || selectedCatalogItem.categoria || '') : '';
+  const valorUnit = selectedCatalogItem ? (parseFloat(selectedCatalogItem.preco) || 0) : 0;
+
+  const entry = {
+    data: activeKey,
+    item: selectedItem,
+    grupo,
+    valorUnit,
+    peso,
+    pesoEnvio: pesoParaEnvio(peso), // com vírgula, para a planilha
+    setor: setor || '-',
+    hora: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    isCustom: isCustomItem,
+    id: Date.now()
+  };
+
+  const btn = document.getElementById('btnSave');
+  btn.classList.add('loading'); btn.disabled = true;
+  log.unshift(entry);
+  localStorage.setItem('estoqueLog', JSON.stringify(log));
+
+  if (config.scriptUrl) {
+    try {
+      // Envia estrutura completa: produto, grupo, valor, peso(vírgula), setor, data/hora
+      const payload = {
+        data: entry.data,
+        item: entry.item,
+        grupo: entry.grupo,
+        valorUnit: entry.valorUnit,
+        peso: entry.pesoEnvio,   // vírgula decimal para o Sheets
+        setor: entry.setor,
+        hora: entry.hora
+      };
+      await fetch(config.scriptUrl, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    } catch(e) {}
+  }
+
+  // Vibra APENAS após salvar com sucesso
+  vibrar();
+
+  btn.classList.remove('loading'); btn.disabled = false;
+
+  const pd = pesoDisplay(peso);
+  showToast(`✓ ${selectedItem.split(' ').slice(0,2).join(' ')} — ${pd.num} ${pd.unit}`, 'success');
+
+  clearItem();
+  document.getElementById('pesoInput').value = '';
+  setorSelecionado = '';
+  document.getElementById('setorPickLabel').textContent = 'Selecione';
+  document.getElementById('btnSetorPick').classList.remove('selected');
+
+  renderLog();
+  document.getElementById('logList').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────
+function renderLog() {
+  const filtrado = log.filter(e => e.data === activeKey);
+  document.getElementById('logCount').textContent = filtrado.length;
+  document.getElementById('logDataLabel').textContent = activeKey;
+  const list = document.getElementById('logList');
+  if (!filtrado.length) {
+    list.innerHTML = '<div class="log-empty"><div class="log-empty-icon">📋</div>Nenhum lançamento ainda</div>';
+    return;
+  }
+  list.innerHTML = filtrado.map(e => {
+    const pd = pesoDisplay(e.peso);
+    const grupoTag = e.grupo ? `<span style="font-size:10px;color:var(--accent);margin-left:4px">${e.grupo}</span>` : '';
+    return `<div class="log-item${e.isCustom?' custom-item':''}" id="logitem-${e.id||0}">
+      <div class="log-item-info">
+        <div class="log-item-name">${e.item}${grupoTag}</div>
+        <div class="log-item-meta">${e.setor} · ${e.hora}</div>
+      </div>
+      <div class="log-item-right">
+        <span class="log-item-num">${pd.num}</span>
+        <span class="log-item-unit">${pd.unit}</span>
+      </div>
+      <button class="log-item-del" onclick="deletarItem(${e.id||0})">✕</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.log-item').forEach(el => initSwipe(el));
+}
+renderLog();
+
+function deletarItem(id) {
+  const el = document.getElementById('logitem-' + id);
+  if (el) { el.classList.add('removing'); vibrar(); }
+  setTimeout(() => { log = log.filter(e => (e.id||0) !== id); localStorage.setItem('estoqueLog',JSON.stringify(log)); renderLog(); }, 200);
+}
+
+// ── Swipe para deletar ────────────────────────────────────────────────────
+function initSwipe(el) {
+  let startX = 0, dx = 0, dragging = false;
+  el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; dx = 0; dragging = true; }, { passive:true });
+  el.addEventListener('touchmove', e => { if (!dragging) return; dx = e.touches[0].clientX - startX; if (dx < 0) el.style.transform = `translateX(${Math.max(dx,-120)}px)`; }, { passive:true });
+  el.addEventListener('touchend', () => {
+    dragging = false;
+    if (dx < -80) { const id = parseInt(el.id.replace('logitem-',''))||0; deletarItem(id); }
+    else { el.style.transform = ''; }
+  });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Header some com teclado ───────────────────────────────────────────────
+(function() {
+  const header = document.getElementById('mainHeader');
+  const nav = document.getElementById('navTabs');
+  document.addEventListener('focusin', e => {
+    if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) { header.classList.add('hidden'); nav.classList.add('hidden'); }
+  });
+  document.addEventListener('focusout', () => {
+    setTimeout(() => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (!['INPUT','SELECT','TEXTAREA'].includes(tag)) { header.classList.remove('hidden'); nav.classList.remove('hidden'); }
+    }, 120);
+  });
+})();
+
+// ── Navegação ─────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelector(`.nav-tab[onclick*="${name}"]`).classList.add('active');
+}
+
+// ── Relatórios com filtros ────────────────────────────────────────────────
+(function() {
+  const d = new Date();
+  const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('relDateIni').value = iso;
+  document.getElementById('relDateFim').value = iso;
+})();
+
+async function gerarRelatorio() {
+  const dateIni = document.getElementById('relDateIni').value;
+  const dateFim = document.getElementById('relDateFim').value;
+  const grupo = document.getElementById('relGrupo').value;
+
+  if (!dateIni) { showToast('Selecione a data inicial','error'); return; }
+  if (!dateFim) { showToast('Selecione a data final','error'); return; }
+
+  const fmtData = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
+  const dataIni = fmtData(dateIni);
+  const dataFim = fmtData(dateFim);
+
+  // Reset UI
+  document.getElementById('relSpinner').classList.add('visible');
+  document.getElementById('relEmpty').classList.remove('visible');
+  document.getElementById('relTableWrap').classList.remove('visible');
+  document.getElementById('relError').classList.remove('visible');
+  document.getElementById('btnRelatorio').disabled = true;
+
+  try {
+    if (!config.scriptUrl) {
+      throw new Error('URL do Apps Script não configurada. Acesse ⚙ Configurações e insira a URL.');
+    }
+
+    const params = new URLSearchParams({ action:'relatorio', dataIni, dataFim });
+    if (grupo) params.set('grupo', grupo);
+    const url = config.scriptUrl + '?' + params.toString();
+
+    let resultado = null;
+    try {
+      const resp = await fetch(url, { method:'GET', mode:'cors' });
+      if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`);
+      resultado = await resp.json();
+      if (resultado && resultado.erro) throw new Error(resultado.erro);
+    } catch(e) {
+      throw new Error('Não foi possível consultar o banco de dados. Verifique a URL do Apps Script e tente novamente.');
+    }
+
+    exibirRelatorio(resultado, dataIni, dataFim, grupo);
+
+  } catch(err) {
+    const errEl = document.getElementById('relError');
+    errEl.textContent = '⚠ ' + err.message;
+    errEl.classList.add('visible');
+  } finally {
+    document.getElementById('relSpinner').classList.remove('visible');
+    document.getElementById('btnRelatorio').disabled = false;
+  }
+}
+
+function exibirRelatorio(dados, dataIni, dataFim, grupo) {
+  if (!dados || !dados.length) {
+    document.getElementById('relEmpty').classList.add('visible');
+    return;
+  }
+  function fmtNum(n) { return parseFloat((+n||0).toFixed(3)).toString().replace('.',','); }
+  document.getElementById('reltbody').innerHTML = dados.map(r =>
+    `<tr><td>${r.item}</td><td style="color:var(--accent);font-size:12px">${r.grupo||''}</td><td>${fmtNum(r.total)} kg</td></tr>`
+  ).join('');
+  const periodo = dataIni === dataFim ? dataIni : `${dataIni} – ${dataFim}`;
+  const grupoLabel = grupo ? ` · ${grupo}` : '';
+  document.getElementById('relMeta').textContent = `${dados.length} produto(s) · ${periodo}${grupoLabel}`;
+  document.getElementById('relTotalItens').textContent = dados.length;
+  document.getElementById('relTableWrap').classList.add('visible');
+}
+
+// ── Config ────────────────────────────────────────────────────────────────
+function openConfig() { document.getElementById('scriptUrl').value = config.scriptUrl||''; document.getElementById('modalConfig').classList.add('open'); }
+function closeConfig() { document.getElementById('modalConfig').classList.remove('open'); }
+function saveConfig() {
+  config.scriptUrl = document.getElementById('scriptUrl').value.trim();
+  localStorage.setItem('estoqueConfig', JSON.stringify(config));
+  closeConfig();
+  showToast('Configuração salva','success');
+}
+</script>
+</body>
+</html>
