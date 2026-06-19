@@ -195,6 +195,18 @@
   .rel-select-grupo { width: 100%; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-card); color: var(--text-principal); font-size: 14px; font-family: var(--font); padding: 11px 12px; outline: none; appearance: none; cursor: pointer; }
   .rel-select-grupo:focus { border-color: var(--primary); }
   .btn-relatorio { width: 100%; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-btn); font-size: 15px; font-weight: 700; font-family: var(--font); padding: 14px; cursor: pointer; transition: opacity .2s; box-shadow: 0 4px 14px rgba(15,98,254,0.25); }
+
+  /* TOGGLE PAINEL */
+  .rel-painel-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-card); padding: 12px 14px; }
+  .rel-painel-toggle-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .rel-painel-toggle-title { font-size: 14px; font-weight: 700; }
+  .rel-painel-toggle-hint { font-size: 11px; color: var(--text-secundario); line-height: 1.3; }
+  .toggle-switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; background: var(--border); border: none; border-radius: 14px; cursor: pointer; padding: 0; transition: background .2s; }
+  .toggle-switch.on { background: var(--primary); }
+  .toggle-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform .2s; }
+  .toggle-switch.on .toggle-knob { transform: translateX(20px); }
+  .rel-filtros-row.painel-disabled { opacity: .4; pointer-events: none; }
+  .rel-select-grupo.painel-disabled { opacity: .4; pointer-events: none; }
   .btn-relatorio:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
   .rel-spinner { display: none; text-align: center; padding: 40px 0; color: var(--text-secundario); font-size: 13px; }
   .rel-spinner .spin { display: inline-block; width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px; }
@@ -323,7 +335,7 @@
 <div class="screen" id="screen-relatorios">
   <div class="section-label" style="margin-top:8px">Filtros</div>
   <div class="rel-filtros">
-    <div class="rel-filtros-row">
+    <div class="rel-filtros-row" id="relFiltrosRow">
       <div class="input-group">
         <label>Data inicial</label>
         <input type="date" id="relDateIni">
@@ -343,6 +355,15 @@
         <option value="Vinhos">Vinhos</option>
        
       </select>
+    </div>
+    <div class="rel-painel-toggle-row">
+      <div class="rel-painel-toggle-text">
+        <span class="rel-painel-toggle-title">Painel</span>
+        <span class="rel-painel-toggle-hint" id="relPainelHint">Usa a data inicial para ler o Painel direto da planilha (aba Itens)</span>
+      </div>
+      <button type="button" class="toggle-switch" id="togglePainel" onclick="togglePainelMode()" aria-pressed="false">
+        <span class="toggle-knob"></span>
+      </button>
     </div>
     <button class="btn-relatorio" id="btnRelatorio" onclick="gerarRelatorio()">📊 Gerar Relatório</button>
   </div>
@@ -841,6 +862,30 @@ function showScreen(name) {
 }
  
 // ── Relatórios com filtros ────────────────────────────────────────────────
+let painelAtivo = false;
+
+function togglePainelMode() {
+  painelAtivo = !painelAtivo;
+  const btn = document.getElementById('togglePainel');
+  const dateFimGroup = document.getElementById('relDateFim').closest('.input-group');
+  const grupoSelect = document.getElementById('relGrupo');
+  const hint = document.getElementById('relPainelHint');
+
+  btn.classList.toggle('on', painelAtivo);
+  btn.setAttribute('aria-pressed', painelAtivo ? 'true' : 'false');
+
+  // No modo Painel só a data inicial é usada (data única do J2 da aba Itens)
+  dateFimGroup.classList.toggle('painel-disabled', painelAtivo);
+  document.getElementById('relDateFim').disabled = painelAtivo;
+
+  if (painelAtivo) {
+    document.getElementById('relDateFim').value = document.getElementById('relDateIni').value;
+    hint.textContent = 'Vai ler a aba "Itens" da planilha (nome=A, grupo=E, peso=I) usando a data selecionada';
+  } else {
+    hint.textContent = 'Usa a data inicial para ler o Painel direto da planilha (aba Itens)';
+  }
+}
+
 (function() {
   const d = new Date();
   const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -872,7 +917,11 @@ async function gerarRelatorio() {
       throw new Error('URL do Apps Script não configurada. Acesse ⚙ Configurações e insira a URL.');
     }
  
-    const params = new URLSearchParams({ action:'relatorio', data_inicial: dataIni, data_final: dataFim });
+    const params = new URLSearchParams(
+      painelAtivo
+        ? { action:'painel', data: dataIni }
+        : { action:'relatorio', data_inicial: dataIni, data_final: dataFim }
+    );
     if (grupo) params.set('grupo', grupo);
     const url = config.scriptUrl + '?' + params.toString();
  
