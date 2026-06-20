@@ -376,9 +376,27 @@
       <thead id="relthead"><tr><th>Produto</th><th>Grupo</th><th>Peso</th><th>Valor</th></tr></thead>
       <tbody id="reltbody"></tbody>
     </table>
+    <!-- Rodapé modo relatório normal -->
     <div class="rel-total" id="relTotalWrap">
-      <span class="rel-total-label">Total de itens</span>
+      <span class="rel-total-label">Total</span>
       <span class="rel-total-val" id="relTotalItens">—</span>
+    </div>
+    <!-- Rodapé modo painel -->
+    <div id="painelResumoWrap" style="display:none;margin-top:12px;border-radius:10px;overflow:hidden;border:1px solid var(--border)">
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <div style="flex:1;padding:10px 14px;background:var(--bg-card)">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secundario);margin-bottom:4px">Preenchidos</div>
+          <div style="font-size:18px;font-weight:800;color:var(--status-seguro)" id="painelPreenchidos">—</div>
+        </div>
+        <div style="flex:1;padding:10px 14px;background:var(--bg-card);border-left:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secundario);margin-bottom:4px">Zerados</div>
+          <div style="font-size:18px;font-weight:800;color:var(--status-critico)" id="painelZerados">—</div>
+        </div>
+      </div>
+      <div style="padding:12px 14px;background:var(--bg-card-alt)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secundario);margin-bottom:4px">Valor total do estoque</div>
+        <div style="font-size:22px;font-weight:800;color:var(--navy)" id="painelValorTotal">—</div>
+      </div>
     </div>
   </div>
 </div>
@@ -935,7 +953,12 @@ async function gerarRelatorio() {
       throw new Error('Não foi possível consultar o banco de dados. Verifique a URL do Apps Script e tente novamente.');
     }
  
-    exibirRelatorio(resultado, dataIni, dataFim, grupo);
+    // Modo painel retorna { itens, resumo }, relatório retorna array direto
+    if (painelAtivo && resultado && resultado.itens) {
+      exibirRelatorio(resultado.itens, dataIni, dataFim, grupo, resultado.resumo);
+    } else {
+      exibirRelatorio(resultado, dataIni, dataFim, grupo, null);
+    }
  
   } catch(err) {
     const errEl = document.getElementById('relError');
@@ -947,7 +970,7 @@ async function gerarRelatorio() {
   }
 }
  
-function exibirRelatorio(dados, dataIni, dataFim, grupo) {
+function exibirRelatorio(dados, dataIni, dataFim, grupo, resumo) {
   if (!dados || !dados.length) {
     document.getElementById('relEmpty').classList.add('visible');
     return;
@@ -963,11 +986,12 @@ function exibirRelatorio(dados, dataIni, dataFim, grupo) {
     document.getElementById('relthead').innerHTML =
       '<tr><th>Produto</th><th>Grupo</th><th>Quantidade</th></tr>';
     document.getElementById('relTotalWrap').style.display = 'none';
+    document.getElementById('painelResumoWrap').style.display = 'block';
 
     document.getElementById('reltbody').innerHTML = dados.map(r => {
       const zerado = r.zerado || (+r.total === 0);
       const qtdStyle = zerado
-        ? 'font-weight:700;color:var(--status-critico);background:rgba(218,30,40,0.08);border-radius:6px;padding:2px 6px'
+        ? 'font-weight:700;color:var(--status-critico);background:rgba(218,30,40,0.08);border-radius:6px;padding:2px 8px'
         : 'color:var(--status-seguro);font-weight:600';
       const rowStyle = zerado ? 'background:rgba(218,30,40,0.04)' : '';
       return `<tr style="${rowStyle}">
@@ -977,15 +1001,22 @@ function exibirRelatorio(dados, dataIni, dataFim, grupo) {
       </tr>`;
     }).join('');
 
-    const zerados = dados.filter(r => r.zerado || (+r.total === 0)).length;
+    // Resumo no rodapé
+    if (resumo) {
+      document.getElementById('painelPreenchidos').textContent = resumo.preenchidos + ' itens';
+      document.getElementById('painelZerados').textContent = resumo.zerados + ' itens';
+      document.getElementById('painelValorTotal').textContent = fmtBRL(resumo.valorTotalEstoque);
+    }
+
     document.getElementById('relMeta').textContent =
-      `${dados.length} produto(s) · ${periodo}${grupoLabel}${zerados ? ` · ${zerados} zerado(s)` : ''}`;
+      `${dados.length} produto(s) · ${periodo}${grupoLabel}`;
 
   } else {
     // ── MODO RELATÓRIO NORMAL ────────────────────────────────────────────────
     document.getElementById('relthead').innerHTML =
       '<tr><th>Produto</th><th>Grupo</th><th>Peso</th><th>Valor</th></tr>';
     document.getElementById('relTotalWrap').style.display = '';
+    document.getElementById('painelResumoWrap').style.display = 'none';
 
     let totalPeso = 0, totalValor = 0;
     document.getElementById('reltbody').innerHTML = dados.map(r => {
