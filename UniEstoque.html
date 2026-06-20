@@ -373,10 +373,10 @@
   <div class="rel-table-wrap" id="relTableWrap">
     <div class="rel-meta" id="relMeta"></div>
     <table class="rel-table">
-      <thead><tr><th>Produto</th><th>Grupo</th><th>Peso</th><th>Valor</th></tr></thead>
+      <thead id="relthead"><tr><th>Produto</th><th>Grupo</th><th>Peso</th><th>Valor</th></tr></thead>
       <tbody id="reltbody"></tbody>
     </table>
-    <div class="rel-total">
+    <div class="rel-total" id="relTotalWrap">
       <span class="rel-total-label">Total de itens</span>
       <span class="rel-total-val" id="relTotalItens">—</span>
     </div>
@@ -954,23 +954,57 @@ function exibirRelatorio(dados, dataIni, dataFim, grupo) {
   }
   function fmtNum(n) { return parseFloat((+n||0).toFixed(3)).toString().replace('.',','); }
   function fmtBRL(n) { return 'R$\u00a0' + (+n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  
-  let totalPeso = 0, totalValor = 0;
-  document.getElementById('reltbody').innerHTML = dados.map(r => {
-    totalPeso += (+r.total||0);
-    totalValor += (+r.valor||0);
-    return `<tr>
-      <td>${r.item}</td>
-      <td style="color:var(--accent);font-size:12px">${r.grupo||''}</td>
-      <td>${fmtNum(r.total)} kg</td>
-      <td style="font-size:12px;color:var(--text-secundario)">${fmtBRL(r.valor)}</td>
-    </tr>`;
-  }).join('');
-  
+
   const periodo = dataIni === dataFim ? dataIni : `${dataIni} – ${dataFim}`;
   const grupoLabel = grupo ? ` · ${grupo}` : '';
-  document.getElementById('relMeta').textContent = `${dados.length} produto(s) · ${periodo}${grupoLabel}`;
-  document.getElementById('relTotalItens').textContent = dados.length + ' itens · ' + fmtNum(totalPeso) + ' kg · ' + fmtBRL(totalValor);
+
+  if (painelAtivo) {
+    // ── MODO PAINEL ──────────────────────────────────────────────────────────
+    document.getElementById('relthead').innerHTML =
+      '<tr><th>Produto</th><th>Grupo</th><th>Quantidade</th></tr>';
+    document.getElementById('relTotalWrap').style.display = 'none';
+
+    document.getElementById('reltbody').innerHTML = dados.map(r => {
+      const zerado = r.zerado || (+r.total === 0);
+      const qtdStyle = zerado
+        ? 'font-weight:700;color:var(--status-critico);background:rgba(218,30,40,0.08);border-radius:6px;padding:2px 6px'
+        : 'color:var(--status-seguro);font-weight:600';
+      const rowStyle = zerado ? 'background:rgba(218,30,40,0.04)' : '';
+      return `<tr style="${rowStyle}">
+        <td>${r.item}</td>
+        <td style="color:var(--accent);font-size:12px">${r.grupo||''}</td>
+        <td><span style="${qtdStyle}">${zerado ? '0' : fmtNum(r.total)}</span></td>
+      </tr>`;
+    }).join('');
+
+    const zerados = dados.filter(r => r.zerado || (+r.total === 0)).length;
+    document.getElementById('relMeta').textContent =
+      `${dados.length} produto(s) · ${periodo}${grupoLabel}${zerados ? ` · ${zerados} zerado(s)` : ''}`;
+
+  } else {
+    // ── MODO RELATÓRIO NORMAL ────────────────────────────────────────────────
+    document.getElementById('relthead').innerHTML =
+      '<tr><th>Produto</th><th>Grupo</th><th>Peso</th><th>Valor</th></tr>';
+    document.getElementById('relTotalWrap').style.display = '';
+
+    let totalPeso = 0, totalValor = 0;
+    document.getElementById('reltbody').innerHTML = dados.map(r => {
+      totalPeso += (+r.total||0);
+      totalValor += (+r.valor||0);
+      return `<tr>
+        <td>${r.item}</td>
+        <td style="color:var(--accent);font-size:12px">${r.grupo||''}</td>
+        <td>${fmtNum(r.total)} kg</td>
+        <td style="font-size:12px;color:var(--text-secundario)">${fmtBRL(r.valor)}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('relMeta').textContent =
+      `${dados.length} produto(s) · ${periodo}${grupoLabel}`;
+    document.getElementById('relTotalItens').textContent =
+      dados.length + ' itens · ' + fmtNum(totalPeso) + ' kg · ' + fmtBRL(totalValor);
+  }
+
   document.getElementById('relTableWrap').classList.add('visible');
 }
  
