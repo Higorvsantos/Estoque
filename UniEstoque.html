@@ -892,15 +892,14 @@ function togglePainelMode() {
   btn.classList.toggle('on', painelAtivo);
   btn.setAttribute('aria-pressed', painelAtivo ? 'true' : 'false');
 
-  // No modo Painel só a data inicial é usada (data única do J2 da aba Itens)
   dateFimGroup.classList.toggle('painel-disabled', painelAtivo);
   document.getElementById('relDateFim').disabled = painelAtivo;
 
   if (painelAtivo) {
     document.getElementById('relDateFim').value = document.getElementById('relDateIni').value;
-    hint.textContent = 'Vai ler a aba "Itens" da planilha (nome=A, grupo=E, peso=I) usando a data selecionada';
+    hint.textContent = 'Soma os itens contados na data selecionada e exibe na ordem do catálogo, destacando os zerados';
   } else {
-    hint.textContent = 'Usa a data inicial para ler o Painel direto da planilha (aba Itens)';
+    hint.textContent = 'Exibe o relatório de contagens no período selecionado com peso e valor total';
   }
 }
 
